@@ -140,7 +140,8 @@ def can_qualify_for_loan(tdsr: float, max_tdsr: float = 55.0) -> bool:
     Returns:
         True if can qualify, False otherwise
     """
-    return tdsr <= max_tdsr
+    # Round to 2 decimal places to avoid floating point precision issues
+    return round(tdsr, 2) <= max_tdsr
 
 
 # Example usage and verification
