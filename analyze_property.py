@@ -14,6 +14,10 @@ from market_data import (
     analyze_market, print_market_analysis,
     get_price_history, print_price_history
 )
+from calculations import (
+    calculate_bsd, calculate_absd, calculate_mortgage_monthly,
+    calculate_rental_yield
+)
 
 
 def get_input(prompt: str, input_type: type = str, default=None, validator=None, help_text=None):
