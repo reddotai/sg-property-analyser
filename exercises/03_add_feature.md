@@ -40,9 +40,16 @@ Add TDSR checking to the analyzer.
 
 ## Step-by-Step Guide
 
-### Step 1: Add the calculation function (Line ~15 in calculations.py)
+### Step 1: Verify calculations.py has the functions
 
-Open `calculations.py` and add this function after `calculate_rental_yield`:
+Open `calculations.py` and check that these functions exist:
+
+```python
+def calculate_tdsr(monthly_mortgage: float, other_debts: float, monthly_income: float) -> float:
+def can_qualify_for_loan(tdsr: float, max_tdsr: float = 55.0) -> bool:
+```
+
+If they don't exist, add them:
 
 ```python
 def calculate_tdsr(monthly_mortgage: float, other_debts: float, monthly_income: float) -> float:
@@ -66,9 +73,35 @@ def can_qualify_for_loan(tdsr: float, max_tdsr: float = 55.0) -> bool:
 
 ---
 
-### Step 2: Add user inputs (Line ~140 in analyze_property.py)
+### Step 2: Update imports in analyze_property.py
 
-Find the section where the buyer type is selected (around line 140). After the buyer type selection, add:
+Find the imports at the top of `analyze_property.py`. Look for:
+
+```python
+from calculations import (
+    calculate_bsd, calculate_absd, calculate_mortgage_monthly,
+    calculate_rental_yield
+)
+```
+
+Add the new functions:
+
+```python
+from calculations import (
+    calculate_bsd, calculate_absd, calculate_mortgage_monthly,
+    calculate_rental_yield, calculate_tdsr, can_qualify_for_loan
+)
+```
+
+---
+
+### Step 3: Add user inputs
+
+Find the section in `analyze_property.py` where the buyer type is selected.
+
+**Find it with:** `grep -n "BUYER TYPE" analyze_property.py`
+
+After the buyer type selection (after the `choice = get_input(...)` line), add:
 
 ```python
     # NEW: Get income and debt information for TDSR
@@ -79,7 +112,7 @@ Find the section where the buyer type is selected (around line 140). After the b
     monthly_income = get_input(
         "Monthly income",
         float,
-        validator=validate_price,  # Reuse price validator (checks positive)
+        validator=validate_price,
         help_text="Your gross monthly income (e.g., 8000)"
     )
     
@@ -93,12 +126,19 @@ Find the section where the buyer type is selected (around line 140). After the b
 
 ---
 
-### Step 3: Calculate and display TDSR (Line ~220 in analyze_property.py)
+### Step 4: Calculate TDSR
 
-Find the `print_analysis` function call. Before that, calculate TDSR:
+Find where `analyze_deal()` is called. 
+
+**Find it with:** `grep -n "analyze_deal" analyze_property.py`
+
+After the analysis is returned, add TDSR calculation:
 
 ```python
-    # Calculate TDSR
+    # Run analysis
+    analysis = analyze_deal(listing, buyer_type, is_hdb)
+    
+    # NEW: Calculate TDSR
     tdsr = calculate_tdsr(
         analysis['monthly_mortgage'],
         other_debts,
@@ -109,12 +149,20 @@ Find the `print_analysis` function call. Before that, calculate TDSR:
 
 ---
 
-### Step 4: Display the result
+### Step 5: Display the result
 
-In the `print_analysis` function (around line 260), add this section:
+Find the `print_analysis()` function.
+
+**Find it with:** `grep -n "def print_analysis" analyze_property.py`
+
+Inside `print_analysis`, find the "INVESTMENT ANALYSIS" section.
+
+**Find it with:** `grep -n "INVESTMENT ANALYSIS" analyze_property.py`
+
+After that section, add:
 
 ```python
-    # Add this after the "INVESTMENT ANALYSIS" section
+    # NEW: TDSR section
     print("\n" + "-"*60)
     print("LOAN QUALIFICATION (TDSR)")
     print("-"*60)
@@ -126,28 +174,32 @@ In the `print_analysis` function (around line 260), add this section:
         print("✅ Can qualify for loan (TDSR ≤ 55%)")
     else:
         print("❌ Cannot qualify — TDSR exceeds 55% limit")
-        print(f"   Maximum monthly payment: {format_currency(monthly_income * 0.55 - other_debts)}")
+        max_payment = monthly_income * 0.55 - other_debts
+        print(f"   Maximum monthly payment: {format_currency(max_payment)}")
+```
+
+**Note:** You'll need to pass `monthly_income`, `other_debts`, `tdsr`, and `can_qualify` to `print_analysis()`. Update the function signature:
+
+```python
+def print_analysis(listing, analysis, monthly_income=0, other_debts=0, tdsr=0, can_qualify=True):
+```
+
+And update the call:
+
+```python
+print_analysis(listing, analysis, monthly_income, other_debts, tdsr, can_qualify)
 ```
 
 ---
 
-## Hints
+## Testing Your Changes
 
-### Finding the right lines
-
-Use these commands to find the exact locations:
-
+Run the analyzer:
 ```bash
-# Find where buyer type is selected
-grep -n "Buyer type" analyze_property.py
-
-# Find the print_analysis function
-grep -n "def print_analysis" analyze_property.py
+python3 analyze_property.py --manual
 ```
 
-### Testing your changes
-
-Run the analyzer and test with these scenarios:
+Test with these scenarios:
 
 | Monthly Income | Mortgage | Other Debts | Expected TDSR | Can Qualify? |
 |----------------|----------|-------------|---------------|--------------|
@@ -160,16 +212,13 @@ Run the analyzer and test with these scenarios:
 ## Troubleshooting
 
 **Error: "calculate_tdsr is not defined"**
-→ Make sure you added the import in `analyze_property.py`:
-```python
-from calculations import (
-    calculate_bsd, calculate_absd, calculate_mortgage_monthly,
-    calculate_rental_yield, calculate_tdsr, can_qualify_for_loan  # Add these
-)
-```
+→ Check that you added the import in Step 2
 
 **Error: "other_debts is not defined"**
-→ Make sure you added the `other_debts` variable in the main function.
+→ Check that you added the input in Step 3
+
+**Error: "print_analysis() takes 2 positional arguments but 6 were given"**
+→ Update the function signature to accept the new parameters
 
 ---
 
@@ -177,8 +226,8 @@ from calculations import (
 
 - What TDSR is and why banks care
 - How to add features to an existing codebase
-- Input validation and error handling
-- Working with multiple files (calculations.py + analyze_property.py)
+- Working with multiple files
+- Updating function signatures
 
 ---
 

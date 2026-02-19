@@ -77,9 +77,9 @@ setx URA_API_KEY "your_key"
 
 ## Step 4: Modify the Code
 
-### Step 4a: Add imports (Line ~1 in market_data.py)
+### Step 4a: Add imports
 
-Add these imports at the top of `market_data.py`:
+Open `market_data.py` and add at the top:
 
 ```python
 import os
@@ -88,9 +88,13 @@ import requests
 
 ---
 
-### Step 4b: Add real data function (Line ~100 in market_data.py)
+### Step 4b: Add the real data function
 
-Add this function after `get_simulated_transactions`:
+Find the `get_simulated_transactions()` function.
+
+**Find it with:** `grep -n "def get_simulated_transactions" market_data.py`
+
+Add this new function after it:
 
 ```python
 def get_ura_transactions_real(district: int, property_type: str) -> List[Transaction]:
@@ -148,15 +152,21 @@ def get_ura_transactions_real(district: int, property_type: str) -> List[Transac
 
 ---
 
-### Step 4c: Update analyze_market function (Line ~150 in market_data.py)
+### Step 4c: Update analyze_market to use real data
 
-Find the `analyze_market` function and change this line:
+Find the `analyze_market()` function.
+
+**Find it with:** `grep -n "def analyze_market" market_data.py`
+
+Find this line inside the function:
 
 ```python
-# OLD:
-transactions = get_ura_transactions(district, property_type)
+transactions = get_simulated_transactions(district, property_type)
+```
 
-# NEW:
+Change it to:
+
+```python
 transactions = get_ura_transactions_real(district, property_type)
 ```
 
@@ -176,7 +186,7 @@ You should see:
 
 Instead of:
 ```
-⚠️  NOTE: Using simulated data for demonstration
+⚠️  ⚠️  ⚠️  USING SIMULATED DATA - NOT REAL PRICES  ⚠️  ⚠️  ⚠️
 ```
 
 ---
@@ -248,6 +258,8 @@ def get_cached_transactions(district, property_type):
     
     return transactions
 ```
+
+Then update `analyze_market` to use `get_cached_transactions` instead.
 
 ---
 

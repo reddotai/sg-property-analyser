@@ -16,7 +16,7 @@ from market_data import (
 )
 from calculations import (
     calculate_bsd, calculate_absd, calculate_mortgage_monthly,
-    calculate_rental_yield
+    calculate_rental_yield, calculate_tdsr, can_qualify_for_loan
 )
 
 
@@ -274,7 +274,7 @@ def print_analysis(listing: PropertyListing, analysis: dict, show_breakdown: boo
     # Investment metrics
     estimated_rent = estimate_market_rent(listing)
     if estimated_rent:
-        yield_pct = estimate_rental_yield(analysis['price'], estimated_rent)
+        yield_pct = calculate_rental_yield(analysis['price'], estimated_rent)
         cashflow = estimated_rent - analysis['total_monthly']
         benchmark = get_yield_benchmark(listing.property_type or 'condo')
         
