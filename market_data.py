@@ -5,6 +5,7 @@ Fetches nearby transactions and price history.
 """
 
 import json
+import os
 import re
 from typing import List, Optional, Dict
 from dataclasses import dataclass
@@ -128,6 +129,59 @@ def get_ura_transactions(
     return sorted(transactions, key=lambda x: x.date, reverse=True)
 
 
+def get_ura_transactions_real(district: int, property_type: str) -> List[Transaction]:
+    """
+    Fetch real transaction data from URA API.
+    
+    Falls back to simulated data if API is unavailable.
+    """
+    api_key = os.environ.get('URA_API_KEY')
+    
+    if not api_key:
+        print("⚠️  No URA_API_KEY found. Using simulated data.")
+        return get_ura_transactions(district, property_type)
+    
+    try:
+        # Call URA API
+        headers = {
+            'AccessKey': api_key,
+            'User-Agent': 'sg-property-analyser/1.0'
+        }
+        
+        url = f"https://www.ura.gov.sg/uraDataService/invokeUraDS?service=PMI_ResiTransaction&district={district}"
+        
+        response = requests.get(url, headers=headers, timeout=10)
+        response.raise_for_status()
+        
+        data = response.json()
+        
+        # Parse response
+        transactions = []
+        for item in data.get('Result', []):
+            # Only include matching property types
+            if item.get('propertyType', '').lower() == property_type.lower():
+                transactions.append(Transaction(
+                    address=item.get('streetName', 'Unknown'),
+                    property_type=property_type,
+                    size_sqft=float(item.get('floorArea', 0)),
+                    price=float(item.get('transactionPrice', 0)),
+                    date=item.get('transactionDate', ''),
+                    is_simulated=False
+                ))
+        
+        if transactions:
+            print(f"✅ Loaded {len(transactions)} real transactions from URA")
+            return transactions
+        else:
+            print("⚠️  No transactions found. Using simulated data.")
+            return get_ura_transactions(district, property_type)
+            
+    except Exception as e:
+        print(f"⚠️  Could not fetch real data: {e}")
+        print("Using simulated data instead.")
+        return get_ura_transactions(district, property_type)
+
+
 def analyze_market(
     target_price: float,
     target_size: float,
@@ -140,7 +194,11 @@ def analyze_market(
         raise ValueError("Target size must be positive")
     
     target_psf = target_price / target_size
-    transactions = get_ura_transactions(district, property_type)
+    transactions = get_ura_transactions_real(district, property_type)
+    
+    # Check if we're using simulated or real data
+    is_simulated = all(t.is_simulated for t in transactions) if transactions else True
+    data_source = 'ura_api' if not is_simulated else 'simulated'
     
     if not transactions:
         return MarketAnalysis(
@@ -191,8 +249,8 @@ def analyze_market(
         max_nearby_psf=max_psf,
         transactions=transactions,
         price_trend=trend,
-        is_simulated=True,
-        data_source='simulated'
+        is_simulated=is_simulated,
+        data_source=data_source
     )
 
 

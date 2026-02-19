@@ -219,7 +219,7 @@ Rental Yield: Annual rent ÷ Purchase price
     print("="*60 + "\n")
 
 
-def print_analysis(listing: PropertyListing, analysis: dict, show_breakdown: bool = False):
+def print_analysis(listing: PropertyListing, analysis: dict, monthly_income=0, other_debts=0, tdsr=0, can_qualify=True, show_breakdown: bool = False):
     """Print formatted analysis."""
     print("\n" + "="*60)
     print(f"📍  {listing.address or listing.title or 'Property Analysis'}")
@@ -290,6 +290,22 @@ def print_analysis(listing: PropertyListing, analysis: dict, show_breakdown: boo
         
         if cashflow < 0:
             print(f"\n⚠️  You'll need {format_currency(abs(cashflow))}/month from other income")
+    
+    # NEW: TDSR section
+    if monthly_income > 0:
+        print("\n" + "-"*60)
+        print("LOAN QUALIFICATION (TDSR)")
+        print("-"*60)
+        print(f"Monthly income: {format_currency(monthly_income)}")
+        print(f"Monthly debts: {format_currency(analysis['monthly_mortgage'] + other_debts)}")
+        print(f"TDSR: {tdsr:.1f}%")
+        
+        if can_qualify:
+            print("✅ Can qualify for loan (TDSR ≤ 55%)")
+        else:
+            print("❌ Cannot qualify — TDSR exceeds 55% limit")
+            max_payment = monthly_income * 0.55 - other_debts
+            print(f"   Maximum monthly payment: {format_currency(max_payment)}")
     
     # Warnings
     print("\n" + "-"*60)
@@ -447,10 +463,38 @@ Examples:
     }
     buyer_type = buyer_types.get(choice, 'singaporean_first')
     
+    # NEW: Get income and debt information for TDSR
+    print("\n" + "="*60)
+    print("INCOME & DEBTS (for TDSR calculation)")
+    print("="*60)
+    
+    monthly_income = get_input(
+        "Monthly income",
+        float,
+        validator=validate_price,
+        help_text="Your gross monthly income (e.g., 8000)"
+    )
+    
+    other_debts = get_input(
+        "Other monthly debt payments",
+        float,
+        default=0,
+        help_text="Car loan, credit cards, etc. (e.g., 1000)"
+    )
+    
     # Run analysis
     try:
         analysis = analyze_deal(listing, buyer_type, is_hdb)
-        print_analysis(listing, analysis, show_breakdown=True)
+        
+        # NEW: Calculate TDSR
+        tdsr = calculate_tdsr(
+            analysis['monthly_mortgage'],
+            other_debts,
+            monthly_income
+        )
+        can_qualify = can_qualify_for_loan(tdsr)
+        
+        print_analysis(listing, analysis, monthly_income, other_debts, tdsr, can_qualify, show_breakdown=True)
     except ValueError as e:
         print(f"\n❌ Analysis error: {e}")
         sys.exit(1)

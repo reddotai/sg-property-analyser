@@ -175,14 +175,8 @@ A: No catch. This is what learning should look like — free, practical, and imm
 
 ## About This Project
 
-This is part of the **"Better Than SkillsFuture"** series — practical projects that teach real skills through building useful tools.
+This project is part of **Better Than SkillsFuture** — practical, hands-on learning for Singapore professionals.
 
-**Other projects in the series:**
-- [expense-parser](https://github.com/reddotai/expense-parser) — AI receipt processing
-- [meeting-minutes-ai](https://github.com/reddotai/meeting-minutes-ai) — Automated meeting notes
+**Learn more:** [reddotai.substack.com](https://reddotai.substack.com)
 
----
-
-**Built in 3 hours. No certificate required.**
-
-If this helped you, star the repo and share it.
+*Built with curiosity, caffeine, and a healthy disregard for boring classroom learning.*
