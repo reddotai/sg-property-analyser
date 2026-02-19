@@ -19,6 +19,16 @@ Real URA data shows:
 
 ---
 
+## Prerequisites
+
+**⚠️ Important:** This exercise requires:
+1. A URA API key (free, but takes 1-3 days to approve)
+2. Basic understanding of APIs
+
+If you don't have an API key yet, **read through this exercise** to understand what's involved, then come back after you get approved.
+
+---
+
 ## Step 1: Apply for URA API Access
 
 1. Go to [Singapore Government Developer Portal](https://www.developer.tech.gov.sg/products/categories/data-and-apis/ura-apis/overview)
@@ -42,65 +52,112 @@ Once approved:
 
 ## Step 3: Set Up Environment Variable
 
+**What is an environment variable?**
+
+Think of it as a secret note that programs can read. We store the API key here so we don't have to type it every time (and so we don't accidentally share it).
+
+**Temporary (for this session only):**
 ```bash
 export URA_API_KEY="your_actual_api_key_here"
 ```
 
-To make it permanent, add to your `~/.bashrc` or `~/.zshrc`:
+**Permanent (recommended):**
 ```bash
+# Add to your shell profile
 echo 'export URA_API_KEY="your_key"' >> ~/.bashrc
 source ~/.bashrc
+```
+
+**On Windows:**
+```cmd
+setx URA_API_KEY "your_key"
 ```
 
 ---
 
 ## Step 4: Modify the Code
 
-Open `market_data.py`. Find the `get_ura_transactions()` function.
+### Step 4a: Add imports (Line ~1 in market_data.py)
 
-Currently it returns simulated data. Replace with:
+Add these imports at the top of `market_data.py`:
 
 ```python
-import requests
 import os
+import requests
+```
 
-def get_ura_transactions(district, property_type, months=6):
+---
+
+### Step 4b: Add real data function (Line ~100 in market_data.py)
+
+Add this function after `get_simulated_transactions`:
+
+```python
+def get_ura_transactions_real(district: int, property_type: str) -> List[Transaction]:
+    """
+    Fetch real transaction data from URA API.
+    
+    Falls back to simulated data if API is unavailable.
+    """
     api_key = os.environ.get('URA_API_KEY')
     
     if not api_key:
         print("⚠️  No URA_API_KEY found. Using simulated data.")
         return get_simulated_transactions(district, property_type)
     
-    # Call real URA API
-    headers = {
-        'AccessKey': api_key,
-        'User-Agent': 'sg-property-analyser/1.0'
-    }
-    
-    # URA API endpoint for private residential transactions
-    url = f"https://www.ura.gov.sg/uraDataService/invokeUraDS?service=PMI_ResiTransaction&district={district}"
-    
-    response = requests.get(url, headers=headers)
-    
-    if response.status_code != 200:
-        print(f"⚠️  API error: {response.status_code}. Using simulated data.")
+    try:
+        # Call URA API
+        headers = {
+            'AccessKey': api_key,
+            'User-Agent': 'sg-property-analyser/1.0'
+        }
+        
+        url = f"https://www.ura.gov.sg/uraDataService/invokeUraDS?service=PMI_ResiTransaction&district={district}"
+        
+        response = requests.get(url, headers=headers, timeout=10)
+        response.raise_for_status()
+        
+        data = response.json()
+        
+        # Parse response
+        transactions = []
+        for item in data.get('Result', []):
+            # Only include matching property types
+            if item.get('propertyType', '').lower() == property_type.lower():
+                transactions.append(Transaction(
+                    address=item.get('streetName', 'Unknown'),
+                    property_type=property_type,
+                    size_sqft=float(item.get('floorArea', 0)),
+                    price=float(item.get('transactionPrice', 0)),
+                    date=item.get('transactionDate', ''),
+                    is_simulated=False
+                ))
+        
+        if transactions:
+            print(f"✅ Loaded {len(transactions)} real transactions from URA")
+            return transactions
+        else:
+            print("⚠️  No transactions found. Using simulated data.")
+            return get_simulated_transactions(district, property_type)
+            
+    except Exception as e:
+        print(f"⚠️  Could not fetch real data: {e}")
+        print("Using simulated data instead.")
         return get_simulated_transactions(district, property_type)
-    
-    data = response.json()
-    
-    # Parse the response and convert to Transaction objects
-    transactions = []
-    for item in data.get('Result', []):
-        transactions.append(Transaction(
-            address=item.get('streetName', 'Unknown'),
-            property_type=property_type,
-            size_sqft=float(item.get('floorArea', 0)),
-            price=float(item.get('transactionPrice', 0)),
-            date=item.get('transactionDate', ''),
-            is_simulated=False
-        ))
-    
-    return transactions
+```
+
+---
+
+### Step 4c: Update analyze_market function (Line ~150 in market_data.py)
+
+Find the `analyze_market` function and change this line:
+
+```python
+# OLD:
+transactions = get_ura_transactions(district, property_type)
+
+# NEW:
+transactions = get_ura_transactions_real(district, property_type)
 ```
 
 ---
@@ -114,14 +171,26 @@ python3 analyze_property.py --manual
 
 You should see:
 ```
-📊 MARKET ANALYSIS
-Using real URA data ✅
+✅ Loaded 15 real transactions from URA
 ```
 
 Instead of:
 ```
 ⚠️  NOTE: Using simulated data for demonstration
 ```
+
+---
+
+## Troubleshooting
+
+**"No URA_API_KEY found"**
+→ Make sure you exported the environment variable in the same terminal session
+
+**"API error: 401"**
+→ Your API key might be wrong or expired. Check the developer portal.
+
+**"Could not fetch real data"**
+→ The API might be down. The code automatically falls back to simulated data.
 
 ---
 
@@ -147,26 +216,9 @@ URA API returns JSON like:
 
 ---
 
-## Error Handling
-
-What if the API is down? Add fallback:
-
-```python
-try:
-    response = requests.get(url, headers=headers, timeout=10)
-    response.raise_for_status()
-    data = response.json()
-except (requests.RequestException, ValueError) as e:
-    print(f"⚠️  Could not fetch real data: {e}")
-    print("Using simulated data instead.")
-    return get_simulated_transactions(district, property_type)
-```
-
----
-
 ## Bonus: Cache the Data
 
-Don't hit the API every time. Cache results:
+Don't hit the API every time. Add caching:
 
 ```python
 import json
@@ -184,14 +236,15 @@ def get_cached_transactions(district, property_type):
                 return [Transaction(**t) for t in cache['transactions']]
     
     # Fetch fresh data
-    transactions = get_ura_transactions(district, property_type)
+    transactions = get_ura_transactions_real(district, property_type)
     
-    # Save to cache
-    with open(cache_file, 'w') as f:
-        json.dump({
-            'timestamp': datetime.now().isoformat(),
-            'transactions': [t.__dict__ for t in transactions]
-        }, f)
+    # Save to cache (only if we got real data)
+    if transactions and not transactions[0].is_simulated:
+        with open(cache_file, 'w') as f:
+            json.dump({
+                'timestamp': datetime.now().isoformat(),
+                'transactions': [t.__dict__ for t in transactions]
+            }, f)
     
     return transactions
 ```
@@ -205,6 +258,7 @@ def get_cached_transactions(district, property_type):
 - JSON parsing and data transformation
 - Error handling and fallbacks
 - Caching strategies
+- Environment variables for secrets
 
 ---
 
@@ -215,6 +269,13 @@ This is a serious portfolio piece:
 > "Integrated Singapore URA API for real-time property transaction data, with caching and fallback mechanisms."
 
 That's resume-worthy.
+
+Commit your changes:
+```bash
+git add market_data.py
+git commit -m "Add URA API integration with real transaction data"
+git push
+```
 
 ---
 

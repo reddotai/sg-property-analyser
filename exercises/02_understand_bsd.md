@@ -121,8 +121,8 @@ def calculate_bsd(price):
 
 # Test
 print(calculate_bsd(500000))   # Should be $8,200
-print(calculate_bsd(1000000))  # Should be $24,600
-print(calculate_bsd(1500000))  # Should be $44,600
+print(calculate_bsd(1000000))  # Should be $21,800
+print(calculate_bsd(1500000))  # Should be $41,800
 ```
 
 ---

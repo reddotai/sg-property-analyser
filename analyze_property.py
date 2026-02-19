@@ -73,50 +73,6 @@ def get_input(prompt: str, input_type: type = str, default=None, validator=None,
             sys.exit(0)
 
 
-def calculate_bsd(price: float) -> tuple:
-    """Calculate Buyer's Stamp Duty with breakdown."""
-    total = 0
-    breakdown = []
-    
-    for min_price, max_price, rate, description in config.get_bsd_tiers():
-        if price > min_price:
-            taxable = min(price, max_price) - min_price
-            amount = taxable * rate
-            total += amount
-            if amount > 0:
-                breakdown.append(f"  • {description}: ${amount:,.0f}")
-    
-    return total, breakdown
-
-
-def calculate_absd(price: float, buyer_type: str = 'singaporean_first') -> tuple:
-    """Calculate Additional Buyer's Stamp Duty."""
-    rate, description = config.get_absd_rate(buyer_type)
-    return price * rate, description
-
-
-def calculate_mortgage_monthly(
-    loan_amount: float,
-    years: int = None,
-    interest_rate: float = None
-) -> float:
-    """Calculate monthly mortgage payment."""
-    if years is None:
-        years = config.loan_tenure
-    if interest_rate is None:
-        interest_rate = config.interest_rate
-    
-    monthly_rate = interest_rate / 12
-    num_payments = years * 12
-    
-    if monthly_rate == 0:
-        return loan_amount / num_payments
-    
-    payment = loan_amount * (monthly_rate * (1 + monthly_rate)**num_payments) / \
-              ((1 + monthly_rate)**num_payments - 1)
-    return payment
-
-
 def estimate_maintenance_fee(property_type: str, district: int) -> float:
     """Estimate maintenance fee based on property type and district."""
     premium_districts = {1, 2, 4, 9, 10, 11}
@@ -143,14 +99,6 @@ def estimate_market_rent(listing: PropertyListing) -> Optional[float]:
     
     rate = rent_psf.get(listing.property_type, 3.0)
     return listing.size_sqft * rate
-
-
-def estimate_rental_yield(price: float, monthly_rent: float) -> float:
-    """Calculate gross rental yield."""
-    if price <= 0:
-        return 0
-    annual_rent = monthly_rent * 12
-    return (annual_rent / price) * 100
 
 
 def get_yield_benchmark(property_type: str) -> str:

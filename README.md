@@ -38,6 +38,7 @@ git clone https://github.com/reddotai/sg-property-analyser.git
 cd sg-property-analyser
 python3 -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
+playwright install chromium  # Required for web scraping
 
 # 2. Run your first analysis
 python3 analyze_property.py --manual

@@ -203,8 +203,17 @@ def print_market_analysis(analysis: MarketAnalysis):
     
     # Show simulated data warning
     if analysis.is_simulated:
-        print("⚠️  NOTE: Using simulated data for demonstration")
-        print("   Connect to URA API for real transaction data")
+        print("⚠️  ⚠️  ⚠️  ⚠️  ⚠️  ⚠️  ⚠️  ⚠️  ⚠️  ⚠️  ⚠️  ⚠️  ⚠️")
+        print("⚠️                                           ⚠️")
+        print("⚠️   USING SIMULATED DATA - NOT REAL PRICES  ⚠️")
+        print("⚠️                                           ⚠️")
+        print("⚠️  These transactions are generated for demo ⚠️")
+        print("⚠️  purposes only. Do NOT make decisions      ⚠️")
+        print("⚠️  based on this data.                       ⚠️")
+        print("⚠️                                           ⚠️")
+        print("⚠️  See Exercise 4 to connect real URA data   ⚠️")
+        print("⚠️                                           ⚠️")
+        print("⚠️  ⚠️  ⚠️  ⚠️  ⚠️  ⚠️  ⚠️  ⚠️  ⚠️  ⚠️  ⚠️  ⚠️  ⚠️")
     
     print("="*60)
     
