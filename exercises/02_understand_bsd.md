@@ -127,6 +127,56 @@ print(calculate_bsd(1500000))  # Should be $41,800
 
 ---
 
+## Stuck?
+
+<details>
+<summary><strong>My manual calculation doesn't match the tool</strong></summary>
+
+Double-check your tiers:
+- First $180K: 1% = $1,800
+- Next $460K ($180K to $640K): 2% = $9,200
+- Next $360K ($640K to $1M): 3% = $10,800
+- Remaining $200K ($1M to $1.2M): 4% = $8,000
+
+**Total: $29,800**
+
+Common mistake: Using the full tier amount instead of just the portion that applies.
+</details>
+
+<details>
+<summary><strong>I don't understand the code with min()</strong></summary>
+
+`min(price, max_price)` handles properties that don't fill an entire tier.
+
+Example: Property costs $900K
+- Tier is $640K to $1M ($360K range)
+- But property is only at $900K
+- So we only tax $900K - $640K = $260K of that tier
+
+`min(900000, 1000000) - 640000` = `900000 - 640000` = $260K
+</details>
+
+<details>
+<summary><strong>My BSD calculator gives wrong answers</strong></summary>
+
+Test with these known values:
+- $500,000 → $8,200
+- $1,000,000 → $21,800
+- $1,500,000 → $41,800
+
+If those work but others don't, check your tier boundaries.
+</details>
+
+<details>
+<summary><strong>I want to see a working BSD calculator</strong></summary>
+
+Only peek if you've tried for 20+ minutes.
+
+[View solution →](../solutions/02_bsd_calculator_solution.py)
+</details>
+
+---
+
 ## What You Learned
 
 - BSD is progressive, not flat

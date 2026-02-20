@@ -209,16 +209,91 @@ Test with these scenarios:
 
 ---
 
-## Troubleshooting
+## Stuck?
 
-**Error: "calculate_tdsr is not defined"**
-→ Check that you added the import in Step 2
+<details>
+<summary><strong>Error: "calculate_tdsr is not defined"</strong></summary>
 
-**Error: "other_debts is not defined"**
-→ Check that you added the input in Step 3
+You forgot to import the function. In `analyze_property.py`, find the line:
+```python
+from calculations import (
+    calculate_bsd, calculate_absd, calculate_mortgage_monthly,
+    calculate_rental_yield
+)
+```
 
-**Error: "print_analysis() takes 2 positional arguments but 6 were given"**
-→ Update the function signature to accept the new parameters
+Add the new functions:
+```python
+from calculations import (
+    calculate_bsd, calculate_absd, calculate_mortgage_monthly,
+    calculate_rental_yield, calculate_tdsr, can_qualify_for_loan
+)
+```
+</details>
+
+<details>
+<summary><strong>Error: "other_debts is not defined"</strong></summary>
+
+You need to add the input variables before using them. In the main function, after the buyer type selection, add:
+```python
+monthly_income = get_input(
+    "Monthly income",
+    float,
+    validator=validate_price,
+    help_text="Your gross monthly income (e.g., 8000)"
+)
+
+other_debts = get_input(
+    "Other monthly debt payments",
+    float,
+    default=0,
+    help_text="Car loan, credit cards, etc. (e.g., 1000)"
+)
+```
+</details>
+
+<details>
+<summary><strong>Error: "print_analysis() takes 2 positional arguments but 6 were given"</strong></summary>
+
+You need to update the function signature to accept the new parameters. Find:
+```python
+def print_analysis(listing, analysis):
+```
+
+Change to:
+```python
+def print_analysis(listing, analysis, monthly_income=0, other_debts=0, tdsr=0, can_qualify=True):
+```
+
+And update the call to pass these values.
+</details>
+
+<details>
+<summary><strong>I don't know where to add the TDSR calculation</strong></summary>
+
+Find where `analyze_deal()` is called. After that line, add:
+```python
+tdsr = calculate_tdsr(
+    analysis['monthly_mortgage'],
+    other_debts,
+    monthly_income
+)
+can_qualify = can_qualify_for_loan(tdsr)
+```
+
+Use this command to find the line:
+```bash
+grep -n "analyze_deal" analyze_property.py
+```
+</details>
+
+<details>
+<summary><strong>I want to see the full solution</strong></summary>
+
+Only open this if you've tried for at least 30 minutes. The struggle is where learning happens.
+
+[View solution →](../solutions/03_add_feature_solution.md)
+</details>
 
 ---
 

@@ -86,6 +86,55 @@ Run the analyzer on a second property. Compare:
 
 ---
 
+## Stuck?
+
+<details>
+<summary><strong>Error: "command not found: python3"</strong></summary>
+
+Try `python` instead of `python3`. If that doesn't work, check that Python is installed:
+```bash
+which python3
+# or
+python --version
+```
+</details>
+
+<details>
+<summary><strong>Error: "No such file or directory: analyze_property.py"</strong></summary>
+
+Make sure you're in the right directory:
+```bash
+pwd
+# Should show: .../sg-property-analyser
+
+# If not, navigate there:
+cd /path/to/sg-property-analyser
+```
+</details>
+
+<details>
+<summary><strong>Error: "ModuleNotFoundError" when running</strong></summary>
+
+You need to activate the virtual environment:
+```bash
+source venv/bin/activate
+```
+
+If you see `(venv)` in your prompt, it's activated.
+</details>
+
+<details>
+<summary><strong>I don't understand the output numbers</strong></summary>
+
+Focus on these key numbers:
+- **Total upfront**: Cash you need now
+- **Monthly mortgage**: What you'll pay every month
+- **Rental yield**: Annual rent ÷ Price (higher is better for investors)
+- **Deal rating**: Quick verdict on whether it's priced well
+</details>
+
+---
+
 ## What You Learned
 
 - How to use the Property Deal Analyzer

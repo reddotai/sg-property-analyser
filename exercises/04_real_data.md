@@ -191,75 +191,71 @@ Instead of:
 
 ---
 
-## Troubleshooting
+## Stuck?
 
-**"No URA_API_KEY found"**
-→ Make sure you exported the environment variable in the same terminal session
+<details>
+<summary><strong>"No URA_API_KEY found" error</strong></summary>
 
-**"API error: 401"**
-→ Your API key might be wrong or expired. Check the developer portal.
-
-**"Could not fetch real data"**
-→ The API might be down. The code automatically falls back to simulated data.
-
----
-
-## Understanding the API Response
-
-URA API returns JSON like:
-```json
-{
-  "Result": [
-    {
-      "streetName": "ANCHORVALE LANE",
-      "floorArea": 904,
-      "transactionPrice": 1468888,
-      "transactionDate": "Jan 2024",
-      "propertyType": "Condominium",
-      "district": 19
-    }
-  ]
-}
+Make sure you exported the key in the **same terminal session**:
+```bash
+export URA_API_KEY="your_actual_key"
 ```
 
-**Challenge:** The API might return different field names. Check the actual response and adjust your code.
+To check if it's set:
+```bash
+echo $URA_API_KEY
+```
 
----
+If empty, you need to export it again.
+</details>
 
-## Bonus: Cache the Data
+<details>
+<summary><strong>"API error: 401" or "Unauthorized"</strong></summary>
 
-Don't hit the API every time. Add caching:
+Your API key might be:
+- Wrong (copy-paste error)
+- Expired (check the developer portal)
+- Not yet activated (wait 1-3 days after applying)
+
+Double-check in the [URA developer portal](https://www.developer.tech.gov.sg).
+</details>
+
+<details>
+<summary><strong>"ModuleNotFoundError: No module named 'requests'"</strong></summary>
+
+Install the requests library:
+```bash
+pip install requests
+```
+
+Or if using the virtual environment:
+```bash
+source venv/bin/activate
+pip install requests
+```
+</details>
+
+<details>
+<summary><strong>The API returns different field names</strong></summary>
+
+URA sometimes changes their API response format. Print the actual response to see what fields are available:
 
 ```python
-import json
-from datetime import datetime, timedelta
-
-def get_cached_transactions(district, property_type):
-    cache_file = f"cache_{district}_{property_type}.json"
-    
-    # Check if cache exists and is fresh (< 24 hours)
-    if os.path.exists(cache_file):
-        with open(cache_file, 'r') as f:
-            cache = json.load(f)
-            cache_time = datetime.fromisoformat(cache['timestamp'])
-            if datetime.now() - cache_time < timedelta(hours=24):
-                return [Transaction(**t) for t in cache['transactions']]
-    
-    # Fetch fresh data
-    transactions = get_ura_transactions_real(district, property_type)
-    
-    # Save to cache (only if we got real data)
-    if transactions and not transactions[0].is_simulated:
-        with open(cache_file, 'w') as f:
-            json.dump({
-                'timestamp': datetime.now().isoformat(),
-                'transactions': [t.__dict__ for t in transactions]
-            }, f)
-    
-    return transactions
+response = requests.get(url, headers=headers)
+data = response.json()
+print(json.dumps(data, indent=2))  # See the actual structure
 ```
 
-Then update `analyze_market` to use `get_cached_transactions` instead.
+Then adjust your code to match the real field names.
+</details>
+
+<details>
+<summary><strong>I want to see the complete working code</strong></strong></summary>
+
+Only look if you've been stuck for 30+ minutes. Figuring this out is the learning.
+
+[View solution →](../solutions/04_ura_integration_solution.py)
+</details>
 
 ---
 
